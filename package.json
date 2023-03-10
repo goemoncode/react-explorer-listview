@@ -1,0 +1,82 @@
+{
+  "name": "react-explorer-listview",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Windows Explorer like ListView component for React",
+  "keywords": [
+    "react",
+    "listview"
+  ],
+  "type": "module",
+  "exports": {
+    "./lib/style.css": "./lib/style.css",
+    "./lib/index.scss": "./lib/index.scss",
+    ".": {
+      "module": "./lib/index.js",
+      "require": "./lib/index.cjs",
+      "default": "./lib/index.js"
+    }
+  },
+  "browser": "lib/index.js",
+  "main": "lib/index.cjs",
+  "module": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "style": "lib/style.css",
+  "sass": "lib/index.scss",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:lib && npm run build:types",
+    "build:lib": "tsc && vite build -c vite-lib.config.ts",
+    "build:types": "tsc -p tsconfig.types.json && api-extractor run --local --verbose",
+    "build:demo": "tsc && vite build",
+    "preview:demo": "vite preview",
+    "test": "vitest --config vitest.config.ts",
+    "lint": "eslint --ext .ts,.tsx src demo"
+  },
+  "dependencies": {
+    "clsx": "^1.2.1",
+    "react-use": "^17.4.0"
+  },
+  "devDependencies": {
+    "@dnd-kit/core": "^6.0.8",
+    "@dnd-kit/modifiers": "^6.0.1",
+    "@dnd-kit/sortable": "^7.0.2",
+    "@dnd-kit/utilities": "^3.2.1",
+    "@faker-js/faker": "^7.6.0",
+    "@microsoft/api-extractor": "^7.34.4",
+    "@testing-library/dom": "^9.0.1",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.4.3",
+    "@types/node": "^18.14.0",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
+    "@typescript-eslint/eslint-plugin": "^5.52.0",
+    "@typescript-eslint/parser": "^5.52.0",
+    "@vitejs/plugin-react": "^3.1.0",
+    "@vitest/ui": "^0.29.2",
+    "dayjs": "^1.11.7",
+    "eslint": "^8.34.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "jsdom": "^21.1.0",
+    "prettier": "^2.8.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "sass": "^1.58.2",
+    "type-fest": "^3.6.1",
+    "typescript": "^4.9.3",
+    "vite": "^4.1.0",
+    "vite-plugin-static-copy": "^0.13.0",
+    "vite-plugin-svgr": "^2.4.0",
+    "vitest": "^0.29.2"
+  },
+  "peerDependencies": {
+    "react": "^18.0",
+    "react-dom": "^18.0"
+  }
+}

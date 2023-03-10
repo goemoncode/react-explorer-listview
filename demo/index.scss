@@ -1,0 +1,165 @@
+@use '../src/index.scss';
+
+:root {
+  color-scheme: light dark;
+}
+
+$font-family: 'Yu Gothic UI', sans-serif;
+$font-size: 12px;
+
+html,
+body,
+input,
+select,
+button {
+  font-family: $font-family;
+  font-size: $font-size;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  display: grid;
+  height: 100vh;
+}
+
+.app {
+  margin: 1em;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  column-gap: 1em;
+  overflow: hidden;
+}
+
+.side {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+
+  h1 {
+    margin: 0 0 0.5em 0;
+    line-height: 1;
+  }
+
+  fieldset {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    border: none;
+    grid-template-columns: 50% 50%;
+    grid-auto-rows: min-content;
+    row-gap: 0.5em;
+  }
+
+  label {
+    margin-inline-end: 0.5em;
+    display: flex;
+    align-items: center;
+  }
+
+  input[type='number'],
+  button[type='button'] {
+    width: auto;
+    padding: 0.2em 0.3em;
+  }
+
+  button[type='button'] {
+    width: auto;
+    font-size: 1em;
+    line-height: 1.3;
+  }
+}
+
+.link {
+  display: grid;
+  place-items: center;
+
+  a {
+    color: currentColor;
+  }
+
+  .github {
+    fill: currentColor;
+    width: 32px;
+  }
+}
+
+.relv {
+  $this: &;
+
+  &__header {
+    #{$this}__cell {
+      &.filter-cell {
+        .filter-input {
+          border-top: 1px solid var(--relv-border-color);
+          padding: 0.5em 0;
+          input,
+          select {
+            box-sizing: border-box;
+            width: calc(100% - 3px);
+          }
+        }
+      }
+
+      &.draggable:hover {
+        background-color: #d9ebf9;
+        @media (prefers-color-scheme: dark) {
+          background-color: #434343;
+        }
+      }
+
+      &.dragging {
+        border-right: none;
+        background-color: #bcdcf4;
+        @media (prefers-color-scheme: dark) {
+          background-color: #8f8f8f;
+        }
+      }
+    }
+  }
+
+  &__row {
+    #{$this}__cell {
+      &.align-end {
+        text-align: end;
+      }
+    }
+  }
+}
+
+.noRows {
+  display: grid;
+  grid-template-columns: var(--relv-grid-template-columns);
+
+  > div {
+    grid-column: 1/-1;
+    text-align: center;
+    font-size: 2em;
+    line-height: 2em;
+  }
+}
+
+.fileName {
+  &-cell {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.5em;
+  }
+
+  &-icon {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    width: 1.5em;
+    padding: 2px 0;
+    line-height: normal;
+    background-color: rgba(gray, 0.5);
+    background-clip: content-box;
+  }
+
+  &-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

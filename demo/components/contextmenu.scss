@@ -1,0 +1,55 @@
+:root {
+  --menu-border-color: #dddddd;
+  --menu-bg-color: Canvas;
+  --menu-icon-color: #979a9c;
+  --menu-item-hover-bg-color: #e8e8e9;
+
+  @media (prefers-color-scheme: dark) {
+    --menu-border-color: #3c4043;
+    --menu-bg-color: #292a2d;
+    --menu-item-hover-bg-color: #3f4042;
+  }
+}
+
+.contextmenu {
+  position: absolute;
+  padding: 0.3em 0;
+  border: 1px solid var(--menu-border-color);
+  background-color: var(--menu-bg-color);
+  box-shadow: 3px 3px 3px rgba(black, 0.3);
+  user-select: none;
+  z-index: 3;
+
+  $this: &;
+
+  &--icon {
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--menu-icon-color);
+    visibility: hidden;
+  }
+
+  &--item {
+    cursor: pointer;
+    padding: 0.4em 1em;
+    display: grid;
+    align-items: center;
+    grid-template-columns: 1.5em minmax(6em, 1fr);
+    column-gap: 0.5em;
+
+    &:hover {
+      background-color: var(--menu-item-hover-bg-color);
+    }
+
+    &.checked {
+      #{$this}--icon {
+        visibility: visible;
+      }
+    }
+
+    &.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+  }
+}
