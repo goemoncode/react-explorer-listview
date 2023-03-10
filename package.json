@@ -1,12 +1,12 @@
 {
-  "name": "react-explorer-listview",
+  "name": "@goemoncode/react-explorer-listview",
   "version": "1.0.0",
   "license": "MIT",
   "description": "Windows Explorer like ListView component for React",
-  "keywords": [
-    "react",
-    "listview"
-  ],
+  "publishConfig": {
+    "access": "restricted",
+    "@goemoncode:registry": "https://npm.pkg.github.com"
+  },
   "type": "module",
   "exports": {
     "./lib/style.css": "./lib/style.css",
