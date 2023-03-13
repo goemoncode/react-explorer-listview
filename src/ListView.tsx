@@ -117,7 +117,7 @@ function ListView<R, K extends Key = Key>(
   // useLayoutEffect(() => setFocusedRow(undefined), [rows]);
   useLayoutEffect(() => setFocusedRow(propFocusedRow), [propFocusedRow]);
   useLayoutEffect(() => setSortColumn(propSortColumn), [propSortColumn]);
-  useLayoutEffect(() => setShiftKeyHeldRow(undefined), [rows]);
+  // useLayoutEffect(() => setShiftKeyHeldRow(undefined), [rows]);
 
   const [columnResizeEventArgs, setColumnResizeEventArgs] =
     useState<[CalculatedColumn<R>, number]>();
