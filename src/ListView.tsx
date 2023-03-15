@@ -10,22 +10,16 @@ import {
   useState,
 } from 'react';
 import { useDebounce } from 'react-use';
-import {
-  CalculatedColumn,
-  cssClassnames,
-  ListViewHandle,
-  ListViewProps,
-  SortColumn,
-} from './types';
-import { getDefaultComparator, range } from './utils';
+import { CalculatedColumn, cssClassnames, ListViewHandle, ListViewProps } from './types';
+import { range } from './utils';
 import { useDefaultRenderers } from './hooks/useDefaultRenderers';
 import { useCalculatedColumns } from './hooks/useCalculatedColumns';
 import { useViewportRows } from './hooks/useViewportRows';
 import { useSelectedRows } from './hooks/useSelectedRows';
-import { ColumnResizeProvider } from './hooks/useColumnResize';
-import { HeaderHeightProvider } from './hooks/useHeaderHeight';
+import { RowSortContext, RowSortProvider } from './hooks/useRowSort';
+import { ColumnResizeContext, ColumnResizeProvider } from './hooks/useColumnResize';
+import { HeaderHeightContext, HeaderHeightProvider } from './hooks/useHeaderHeight';
 import { FocusContainerProvider } from './hooks/useFocusContainer';
-import { RowSortProvider } from './hooks/useRowSort';
 import { useRowKey } from './hooks/useRowKey';
 import { defaultHeaderRowRenderer } from './ListViewHeaderRow';
 import { defaultRowRenderer } from './ListViewRow';
@@ -34,7 +28,7 @@ import clsx from 'clsx';
 function ListView<R, K extends Key = Key>(
   {
     columns: rawColumns,
-    rows: rawRows,
+    rows,
     rowHeight = 26,
     noBorder,
     defaultColumnOptions,
@@ -43,7 +37,7 @@ function ListView<R, K extends Key = Key>(
     onFocusedRowChange,
     selectedRows: propSelectedRows,
     onSelectedRowsChange,
-    sortColumn: propSortColumn,
+    sortColumn,
     onSortColumnChange,
     onColumnResize,
     onRowClick,
@@ -65,26 +59,22 @@ function ListView<R, K extends Key = Key>(
     rawColumns,
     defaultColumnOptions
   );
-  const [sortColumn, setSortColumn] = useState<SortColumn | undefined>(propSortColumn);
-  const rows = useMemo((): readonly R[] => {
-    if (sortColumn === undefined) return rawRows;
-    const column = new Map(columns.map((col) => [col.key, col])).get(sortColumn.columnKey);
-    if (column === undefined) return rawRows;
-    return [...rawRows].sort((a, b) => {
-      const comparator = column.comparator ?? getDefaultComparator(column);
-      const result = comparator(a, b);
-      if (result !== 0) {
-        return sortColumn.direction === 'ASC' ? result : -result;
-      }
-      return 0;
-    });
-  }, [rawRows, columns, sortColumn]);
+  const rowSortContext = useMemo<RowSortContext>(
+    () => ({ sortColumn, onSort: onSortColumnChange }),
+    [onSortColumnChange, sortColumn]
+  );
   const { getByRow, getIndexByKey } = useRowKey(rows, rowKey);
   const [focusedRow, setFocusedRow] = useState<K | undefined>(propFocusedRow);
   const focusedRowIndex = getIndexByKey(focusedRow) ?? -1;
   const [selectedRows, setSelectedRows] = useSelectedRows(propSelectedRows);
   const [shiftKeyHeldRow, setShiftKeyHeldRow] = useState<K | undefined>();
   const [headerHeight, setHeaderHeight] = useState(0);
+  const headerHeightContext = useMemo<HeaderHeightContext>(
+    () => ({
+      onHeaderHeightResize: setHeaderHeight,
+    }),
+    []
+  );
   const ref = useRef<HTMLDivElement>(null);
   const [refs, viewportHeight, viewportRows] = useViewportRows(
     ref,
@@ -116,16 +106,17 @@ function ListView<R, K extends Key = Key>(
   }, [focusedRow, focusedRowIndex]);
   // useLayoutEffect(() => setFocusedRow(undefined), [rows]);
   useLayoutEffect(() => setFocusedRow(propFocusedRow), [propFocusedRow]);
-  useLayoutEffect(() => setSortColumn(propSortColumn), [propSortColumn]);
   // useLayoutEffect(() => setShiftKeyHeldRow(undefined), [rows]);
 
   const [columnResizeEventArgs, setColumnResizeEventArgs] =
     useState<[CalculatedColumn<R>, number]>();
-  const handleColumnResize = useCallback(
-    (column: CalculatedColumn<R>, width: number) => {
-      setColumnWidths(column.key, width);
-      setColumnResizeEventArgs([column, width]);
-    },
+  const columnResizeContext = useMemo<ColumnResizeContext<R>>(
+    () => ({
+      onColumnResize(column: CalculatedColumn<R>, width: number) {
+        setColumnWidths(column.key, width);
+        setColumnResizeEventArgs([column, width]);
+      },
+    }),
     [setColumnWidths]
   );
   useDebounce(() => columnResizeEventArgs && onColumnResize?.(...columnResizeEventArgs), 500, [
@@ -275,17 +266,9 @@ function ListView<R, K extends Key = Key>(
       }}
       {...props}
     >
-      <RowSortProvider
-        value={{
-          sortColumn,
-          onSort: (sortColumn) => {
-            setSortColumn(sortColumn);
-            onSortColumnChange?.(sortColumn);
-          },
-        }}
-      >
-        <HeaderHeightProvider value={{ onHeaderHeightResize: setHeaderHeight }}>
-          <ColumnResizeProvider value={{ onColumnResize: handleColumnResize }}>
+      <RowSortProvider value={rowSortContext}>
+        <HeaderHeightProvider value={headerHeightContext}>
+          <ColumnResizeProvider value={columnResizeContext}>
             <div role="rowgroup" className={cssClassnames.listViewHeader}>
               {headerRowRenderer({ columns })}
             </div>

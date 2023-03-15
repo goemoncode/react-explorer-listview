@@ -7,6 +7,7 @@ import ListView, {
   ListViewHeaderRow,
   reorder,
   SortColumn,
+  useDefaultRowSort,
 } from '../src/';
 import { NumberInput, ActionButton, CheckBox } from './components/FormControl';
 import {
@@ -29,7 +30,7 @@ import clsx from 'clsx';
 import { ReactComponent as Github } from './assets/github.svg';
 
 export default function App() {
-  const [rows] = useState(createRows);
+  const [rows, setRows] = useState(createRows);
   const fileTypes = useMemo(
     () => Array.from(new Set(rows.map((x) => x.fileType)).values()),
     [rows]
@@ -90,6 +91,10 @@ export default function App() {
       },
     });
   }, [fileTypes, minFileSize, maxFileSize]);
+  const [columnReorderEnabled, setColumnReorderEnabled] = useState(true);
+  const [columns, setColumns] = useState(initColumns);
+  const [sortColumn, setSortColumn] = useState<SortColumn>();
+  const sortedRows = useDefaultRowSort(rows, initColumns, sortColumn);
   const initFilter = useMemo<() => RowFilterParams>(
     () => () => ({
       fileName: '',
@@ -101,7 +106,7 @@ export default function App() {
   const [filterVisible, setFilterVisible] = useState(false);
   const [filterParams, setFilterParams] = useState<RowFilterParams>(initFilter);
   const filteredRows = useMemo(() => {
-    return rows.filter((r) => {
+    return sortedRows.filter((r) => {
       return (
         (filterParams.fileName ? r.fileName.includes(filterParams.fileName) : true) &&
         (filterParams.fileType ? r.fileType === filterParams.fileType : true) &&
@@ -111,10 +116,7 @@ export default function App() {
         (filterParams.directoryPath ? r.directoryPath.includes(filterParams.directoryPath) : true)
       );
     });
-  }, [rows, filterParams]);
-  const [columnReorderEnabled, setColumnReorderEnabled] = useState(true);
-  const [columns, setColumns] = useState(initColumns);
-  const [sortColumn, setSortColumn] = useState<SortColumn>();
+  }, [sortedRows, filterParams]);
   const ref = useRef<ListViewHandle>(null);
 
   const onColumnResize = useCallback((column: CalculatedColumn<DemoRow>, width: number) => {
@@ -175,6 +177,26 @@ export default function App() {
     };
   }, [columns, contextMenuProps, handleClick, handleContextMenu]);
 
+  const [focusedRow, setFocusedRow] = useState<string>();
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+
+  function handleKeyDown(event: React.KeyboardEvent) {
+    if (event.key === 'Delete') {
+      const set = new Set(selectedRows);
+      let rowid = sortedRows.find((row) => !set.has(row.id))?.id;
+      const map = new Map(
+        sortedRows.map((row) => {
+          if (!set.has(row.id)) rowid = row.id;
+          return [row.id, rowid];
+        })
+      );
+      setFocusedRow((rowid) => (rowid ? map.get(rowid) : undefined));
+      setTimeout(() => {
+        setRows((rows) => rows.filter((row) => !set.has(row.id)));
+      });
+    }
+  }
+
   return (
     <div className="demo app">
       <div className="side">
@@ -219,6 +241,11 @@ export default function App() {
               }}
               onColumnResize={onColumnResize}
               onSortColumnChange={setSortColumn}
+              focusedRow={focusedRow}
+              onFocusedRowChange={setFocusedRow}
+              selectedRows={selectedRows}
+              onSelectedRowsChange={setSelectedRows}
+              onKeyDown={handleKeyDown}
             />
           </RowFilterProvider>
         </ColumnReorderProvider>

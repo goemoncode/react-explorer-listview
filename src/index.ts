@@ -10,4 +10,5 @@ export * from './hooks/useDefaultRenderers';
 export * from './hooks/useHeaderHeight';
 export * from './hooks/useColumnResize';
 export * from './hooks/useRowSort';
+export * from './hooks/useDefaultRowSort';
 import './index.scss';

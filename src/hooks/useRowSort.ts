@@ -4,7 +4,7 @@ import { SortColumn } from '../types';
 export type RowSortContext = {
   sortColumn?: SortColumn;
   onSort?: (sortColumn?: SortColumn) => void;
-}
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Context = createContext<RowSortContext>({});
