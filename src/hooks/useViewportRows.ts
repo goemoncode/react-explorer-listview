@@ -18,21 +18,19 @@ export function useViewportRows<R, E extends HTMLElement>(
 
   const viewportRows = useMemo(() => {
     if (rows.length == 0) return [];
+    const clamp = (index: number) => Math.min(Math.max(0, index), rows.length - 1);
     const findRowIdx = (offset: number) => Math.floor(offset / rowHeight);
     const overscanThreshold = 4;
     const viewportTopIndex = findRowIdx(scrollTop);
     const viewportBottomIndex = findRowIdx(scrollTop + viewportHeight);
     const viewportRowsCount = Math.min(rows.length, viewportBottomIndex - viewportTopIndex + 1);
-    const overscanBottomIndex = Math.min(rows.length - 1, viewportBottomIndex + overscanThreshold);
-    const overscanTopIndex = Math.max(
-      0,
-      overscanBottomIndex - viewportRowsCount - overscanThreshold
-    );
+    const overscanBottomIndex = clamp(viewportBottomIndex + overscanThreshold);
+    const overscanTopIndex = clamp(overscanBottomIndex - viewportRowsCount - overscanThreshold);
     return Array.from(
       new Set(
         range(overscanTopIndex, overscanBottomIndex).concat([
-          Math.max(0, prevFocusedRowIndex),
-          Math.max(0, focusedRowIndex),
+          clamp(prevFocusedRowIndex),
+          clamp(focusedRowIndex),
         ])
       ).values()
     ).sort();
