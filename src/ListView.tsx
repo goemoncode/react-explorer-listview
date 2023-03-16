@@ -64,15 +64,24 @@ function ListView<R, K extends Key = Key>(
     [onSortColumnChange, sortColumn]
   );
   const { getByRow, getIndexByKey } = useRowKey(rows, rowKey);
+
   const [focusedRow, setFocusedRow] = useState<K | undefined>(propFocusedRow);
   const focusedRowIndex = getIndexByKey(focusedRow) ?? -1;
+  useDebounce(() => onFocusedRowChange?.(focusedRow), 50, [focusedRow]);
+  useLayoutEffect(() => setFocusedRow(propFocusedRow), [propFocusedRow]);
+  useLayoutEffect(() => {
+    if (focusedRow && focusedRowIndex < 0) {
+      setFocusedRow(undefined);
+    }
+  }, [focusedRow, focusedRowIndex]);
+
   const [selectedRows, setSelectedRows] = useSelectedRows(propSelectedRows);
+  useDebounce(() => onSelectedRowsChange?.(selectedRows), 50, [selectedRows]);
+
   const [shiftKeyHeldRow, setShiftKeyHeldRow] = useState<K | undefined>();
   const [headerHeight, setHeaderHeight] = useState(0);
   const headerHeightContext = useMemo<HeaderHeightContext>(
-    () => ({
-      onHeaderHeightResize: setHeaderHeight,
-    }),
+    () => ({ onHeaderHeightResize: setHeaderHeight }),
     []
   );
   const ref = useRef<HTMLDivElement>(null);
@@ -88,6 +97,7 @@ function ListView<R, K extends Key = Key>(
     refHandle,
     () => ({
       element: ref.current,
+      containerElement: null,
       scrollToRow: (rowIndex: number) => {
         if (rowIndex >= 0 && rowIndex <= rows.length - 1) {
           setFocusedRow(getByRow(rows[rowIndex]));
@@ -96,17 +106,6 @@ function ListView<R, K extends Key = Key>(
     }),
     [ref, rows, getByRow]
   );
-  useDebounce(() => onFocusedRowChange?.(focusedRow), 50, [focusedRow]);
-  useDebounce(() => onSelectedRowsChange?.(selectedRows), 50, [selectedRows]);
-
-  useLayoutEffect(() => {
-    if (focusedRow && focusedRowIndex < 0) {
-      setFocusedRow(undefined);
-    }
-  }, [focusedRow, focusedRowIndex]);
-  // useLayoutEffect(() => setFocusedRow(undefined), [rows]);
-  useLayoutEffect(() => setFocusedRow(propFocusedRow), [propFocusedRow]);
-  // useLayoutEffect(() => setShiftKeyHeldRow(undefined), [rows]);
 
   const [columnResizeEventArgs, setColumnResizeEventArgs] =
     useState<[CalculatedColumn<R>, number]>();
@@ -154,14 +153,10 @@ function ListView<R, K extends Key = Key>(
             return 0;
           case 'End':
             return rows.length - 1;
-          case 'PageUp': {
-            const nextRowY = index * rowHeight + rowHeight - viewportHeight;
-            return clamp(Math.floor(nextRowY / rowHeight));
-          }
-          case 'PageDown': {
-            const nextRowY = index * rowHeight + viewportHeight;
-            return clamp(Math.floor(nextRowY / rowHeight));
-          }
+          case 'PageUp':
+            return clamp(index - Math.floor(viewportHeight / rowHeight) + 1);
+          case 'PageDown':
+            return clamp(index + Math.floor(viewportHeight / rowHeight) - 1);
           default:
             return false;
         }

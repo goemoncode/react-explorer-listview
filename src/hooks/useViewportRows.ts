@@ -1,5 +1,5 @@
 import { RefObject, useMemo } from 'react';
-import { useMeasure, useScroll } from 'react-use';
+import { useMeasure, usePrevious, useScroll } from 'react-use';
 import { useMergeRefs } from './useMergeRefs';
 import { range } from '../utils';
 
@@ -9,15 +9,12 @@ export function useViewportRows<R, E extends HTMLElement>(
   rowHeight: number,
   headerHeight: number,
   focusedRowIndex: number
-): [
-  refs: ReturnType<typeof useMergeRefs<E>>,
-  viewportHeight: number,
-  viewportRows: number[]
-] {
+): [refs: ReturnType<typeof useMergeRefs<E>>, viewportHeight: number, viewportRows: number[]] {
   const { y: scrollTop } = useScroll(ref);
   const [measureRef, { height: clientHeight }] = useMeasure<E>();
   const refs = useMergeRefs(ref, measureRef);
   const viewportHeight = clientHeight - headerHeight;
+  const prevFocusedRowIndex = usePrevious(focusedRowIndex) ?? -1;
 
   const viewportRows = useMemo(() => {
     if (rows.length == 0) return [];
@@ -33,10 +30,13 @@ export function useViewportRows<R, E extends HTMLElement>(
     );
     return Array.from(
       new Set(
-        range(overscanTopIndex, overscanBottomIndex).concat([Math.max(0, focusedRowIndex)])
+        range(overscanTopIndex, overscanBottomIndex).concat([
+          Math.max(0, prevFocusedRowIndex),
+          Math.max(0, focusedRowIndex),
+        ])
       ).values()
     ).sort();
-  }, [rows, rowHeight, scrollTop, focusedRowIndex, viewportHeight]);
+  }, [rows.length, scrollTop, viewportHeight, prevFocusedRowIndex, focusedRowIndex, rowHeight]);
 
   return [refs, viewportHeight, viewportRows];
 }
