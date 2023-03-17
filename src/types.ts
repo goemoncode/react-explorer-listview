@@ -84,7 +84,7 @@ export type ListViewProps<R, K extends React.Key = React.Key> = {
   columns: readonly Column<R>[];
   rows: readonly R[];
   rowKey: RowKey<R, K>;
-  rowHeight?: number;
+  rowHeight?: number | string;
   noBorder?: boolean;
   defaultColumnOptions?: DefaultColumnOptions<R>;
   focusedRow?: K;

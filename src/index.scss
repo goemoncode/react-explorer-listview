@@ -1,6 +1,8 @@
 :root {
   --relv-txt-color: CanvasText;
   --relv-bg-color: Canvas;
+  --relv-row-count: 1;
+  --relv-row-height: 2em;
   --relv-border-width: 1px;
   --relv-border-color: #d9d9d9;
   --relv-header-txt-color: #4c607a;
@@ -28,9 +30,9 @@
   color: var(--relv-txt-color);
   background-color: var(--relv-bg-color);
   border: var(--relv-border-width) solid var(--relv-border-color);
+  line-height: var(--relv-row-height);
   box-sizing: border-box;
   user-select: none;
-  line-height: var(--relv-line-height);
 
   $this: &;
 
@@ -80,6 +82,8 @@
 
   &__body {
     display: grid;
+    grid-auto-rows: var(--relv-row-height);
+    grid-template-rows: repeat(var(--relv-row-count), var(--relv-row-height));
   }
 
   &__header-row,

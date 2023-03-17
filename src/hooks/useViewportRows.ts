@@ -6,27 +6,27 @@ import { range } from '../utils';
 export function useViewportRows<R, E extends HTMLElement>(
   ref: RefObject<E>,
   rows: readonly R[],
-  rowHeight: number,
   headerHeight: number,
   focusedRowIndex: number
-): [refs: ReturnType<typeof useMergeRefs<E>>, viewportHeight: number, viewportRows: number[]] {
+): [refs: ReturnType<typeof useMergeRefs<E>>, viewportRows: number[], rowsPerPage: number] {
   const { y: scrollTop } = useScroll(ref);
   const [measureRef, { height: clientHeight }] = useMeasure<E>();
   const refs = useMergeRefs(ref, measureRef);
   const viewportHeight = clientHeight - headerHeight;
   const prevFocusedRowIndex = usePrevious(focusedRowIndex) ?? -1;
 
-  const viewportRows = useMemo(() => {
-    if (rows.length == 0) return [];
-    const clamp = (index: number) => Math.min(Math.max(0, index), rows.length - 1);
-    const findRowIdx = (offset: number) => Math.floor(offset / rowHeight);
+  const [viewportRows, rowsPerPage] = useMemo(() => {
+    if (ref.current === null || rows.length === 0) return [[], 0];
+    function clamp(index: number) {
+      return Math.max(0, Math.min(index, rows.length - 1));
+    }
+    const rowHeight = ref.current.scrollHeight / rows.length;
+    const rowsPerPage = Math.floor(viewportHeight / rowHeight);
+    const viewportTopIndex = Math.floor(scrollTop / rowHeight);
     const overscanThreshold = 4;
-    const viewportTopIndex = findRowIdx(scrollTop);
-    const viewportBottomIndex = findRowIdx(scrollTop + viewportHeight);
-    const viewportRowsCount = Math.min(rows.length, viewportBottomIndex - viewportTopIndex + 1);
-    const overscanBottomIndex = clamp(viewportBottomIndex + overscanThreshold);
-    const overscanTopIndex = clamp(overscanBottomIndex - viewportRowsCount - overscanThreshold);
-    return Array.from(
+    const overscanTopIndex = clamp(viewportTopIndex - overscanThreshold);
+    const overscanBottomIndex = clamp(viewportTopIndex + rowsPerPage + overscanThreshold);
+    const viewportRows = Array.from(
       new Set(
         range(overscanTopIndex, overscanBottomIndex).concat([
           clamp(prevFocusedRowIndex),
@@ -34,7 +34,8 @@ export function useViewportRows<R, E extends HTMLElement>(
         ])
       ).values()
     ).sort();
-  }, [rows.length, scrollTop, viewportHeight, prevFocusedRowIndex, focusedRowIndex, rowHeight]);
+    return [viewportRows, rowsPerPage];
+  }, [ref, rows.length, scrollTop, viewportHeight, prevFocusedRowIndex, focusedRowIndex]);
 
-  return [refs, viewportHeight, viewportRows];
+  return [refs, viewportRows, rowsPerPage];
 }

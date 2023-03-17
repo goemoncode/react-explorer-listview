@@ -230,7 +230,6 @@ export default function App() {
             <ListView
               ref={ref}
               columns={columns}
-              rowHeight={26}
               rows={filteredRows}
               rowKey={(row) => row.id}
               sortColumn={sortColumn}

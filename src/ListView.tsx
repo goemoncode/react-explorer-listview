@@ -29,7 +29,7 @@ function ListView<R, K extends Key = Key>(
   {
     columns: rawColumns,
     rows,
-    rowHeight = 26,
+    rowHeight,
     noBorder,
     defaultColumnOptions,
     rowKey,
@@ -85,10 +85,9 @@ function ListView<R, K extends Key = Key>(
     []
   );
   const ref = useRef<HTMLDivElement>(null);
-  const [refs, viewportHeight, viewportRows] = useViewportRows(
+  const [refs, viewportRows, rowsPerPage] = useViewportRows(
     ref,
     rows,
-    rowHeight,
     headerHeight,
     focusedRowIndex
   );
@@ -123,6 +122,7 @@ function ListView<R, K extends Key = Key>(
   ]);
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (rows.length === 0) return;
     const { key, code, shiftKey, ctrlKey } = event;
     if (ctrlKey && code == 'KeyA') {
       event.preventDefault();
@@ -141,8 +141,8 @@ function ListView<R, K extends Key = Key>(
       }
     } else {
       const getClampedNext = (index: number) => {
-        function clamp(i: number) {
-          return Math.min(Math.max(i, 0), rows.length - 1);
+        function clamp(index: number) {
+          return Math.max(0, Math.min(index, rows.length - 1));
         }
         switch (key) {
           case 'ArrowUp':
@@ -154,9 +154,9 @@ function ListView<R, K extends Key = Key>(
           case 'End':
             return rows.length - 1;
           case 'PageUp':
-            return clamp(index - Math.floor(viewportHeight / rowHeight) + 1);
+            return clamp(index - (rowsPerPage - 1));
           case 'PageDown':
-            return clamp(index + Math.floor(viewportHeight / rowHeight) - 1);
+            return clamp(index + (rowsPerPage - 1));
           default:
             return false;
         }
@@ -232,18 +232,16 @@ function ListView<R, K extends Key = Key>(
     [getByRow, getIndexByKey, rows, selectedRows, setSelectedRows, shiftKeyHeldRow]
   );
 
-  const layoutCssVars: Record<string, string> = {
-    '--relv-line-height': `${rowHeight}px`,
+  function getCssVar(value: string | number | undefined) {
+    return value ? (typeof value === 'string' ? value : `${value}px`) : undefined;
+  }
+  const layoutCssVars: Record<string, string | number | undefined> = {
+    '--relv-row-height': getCssVar(rowHeight),
+    '--relv-row-count': rows.length || 1,
+    '--relv-border-width': noBorder ? 'none' : undefined,
     '--relv-header-height': `${headerHeight}px`,
     '--relv-grid-template-columns': gridTemplateColumns,
   };
-  if (noBorder) {
-    layoutCssVars['--relv-border-width'] = 'none';
-  }
-  const rowGroupCss: Record<string, string> = {};
-  if (rows.length > 0) {
-    rowGroupCss['gridTemplateRows'] = `repeat(${rows.length || 1}, ${rowHeight}px)`;
-  }
 
   const selectedSet = new Set(selectedRows);
   const refContainer = useRef<HTMLDivElement>(null);
@@ -274,7 +272,6 @@ function ListView<R, K extends Key = Key>(
         ref={refContainer}
         role="rowgroup"
         className={cssClassnames.listViewBody}
-        style={rowGroupCss}
         onKeyDown={handleKeyDown}
       >
         <FocusContainerProvider value={refContainer.current}>
