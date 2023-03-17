@@ -85,8 +85,10 @@ function ListView<R, K extends Key = Key>(
     []
   );
   const ref = useRef<HTMLDivElement>(null);
-  const [refs, viewportRows, rowsPerPage] = useViewportRows(
+  const refContainer = useRef<HTMLDivElement>(null);
+  const [refs1, refs2, viewportRows, rowsPerPage] = useViewportRows(
     ref,
+    refContainer,
     rows,
     headerHeight,
     focusedRowIndex
@@ -96,7 +98,7 @@ function ListView<R, K extends Key = Key>(
     refHandle,
     () => ({
       element: ref.current,
-      containerElement: null,
+      containerElement: refContainer.current,
       scrollToRow: (rowIndex: number) => {
         if (rowIndex >= 0 && rowIndex <= rows.length - 1) {
           setFocusedRow(getByRow(rows[rowIndex]));
@@ -244,11 +246,10 @@ function ListView<R, K extends Key = Key>(
   };
 
   const selectedSet = new Set(selectedRows);
-  const refContainer = useRef<HTMLDivElement>(null);
 
   return (
     <div
-      ref={refs}
+      ref={refs1}
       role="table"
       aria-rowcount={rows.length + 1}
       aria-multiselectable={true}
@@ -269,7 +270,7 @@ function ListView<R, K extends Key = Key>(
         </HeaderHeightProvider>
       </RowSortProvider>
       <div
-        ref={refContainer}
+        ref={refs2}
         role="rowgroup"
         className={cssClassnames.listViewBody}
         onKeyDown={handleKeyDown}

@@ -3,24 +3,32 @@ import { useMeasure, usePrevious, useScroll } from 'react-use';
 import { useMergeRefs } from './useMergeRefs';
 import { range } from '../utils';
 
-export function useViewportRows<R, E extends HTMLElement>(
-  ref: RefObject<E>,
+export function useViewportRows<R, E1 extends HTMLElement, E2 extends HTMLElement>(
+  ref1: RefObject<E1>,
+  ref2: RefObject<E2>,
   rows: readonly R[],
   headerHeight: number,
   focusedRowIndex: number
-): [refs: ReturnType<typeof useMergeRefs<E>>, viewportRows: number[], rowsPerPage: number] {
-  const { y: scrollTop } = useScroll(ref);
-  const [measureRef, { height: clientHeight }] = useMeasure<E>();
-  const refs = useMergeRefs(ref, measureRef);
+): [
+  refs1: ReturnType<typeof useMergeRefs<E1>>,
+  refs2: ReturnType<typeof useMergeRefs<E2>>,
+  viewportRows: number[],
+  rowsPerPage: number
+] {
+  const { y: scrollTop } = useScroll(ref1);
+  const [measureRef1, { height: clientHeight }] = useMeasure<E1>();
+  const [measureRef2, { height: scrollHeight }] = useMeasure<E2>();
+  const refs1 = useMergeRefs(ref1, measureRef1);
+  const refs2 = useMergeRefs(ref2, measureRef2);
   const viewportHeight = clientHeight - headerHeight;
   const prevFocusedRowIndex = usePrevious(focusedRowIndex) ?? -1;
 
   const [viewportRows, rowsPerPage] = useMemo(() => {
-    if (ref.current === null || rows.length === 0) return [[], 0];
+    if (scrollHeight === 0 || rows.length === 0) return [[], 0];
     function clamp(index: number) {
       return Math.max(0, Math.min(index, rows.length - 1));
     }
-    const rowHeight = ref.current.scrollHeight / rows.length;
+    const rowHeight = scrollHeight / rows.length;
     const rowsPerPage = Math.floor(viewportHeight / rowHeight);
     const viewportTopIndex = Math.floor(scrollTop / rowHeight);
     const overscanThreshold = 4;
@@ -35,7 +43,7 @@ export function useViewportRows<R, E extends HTMLElement>(
       ).values()
     ).sort();
     return [viewportRows, rowsPerPage];
-  }, [ref, rows.length, scrollTop, viewportHeight, prevFocusedRowIndex, focusedRowIndex]);
+  }, [focusedRowIndex, prevFocusedRowIndex, rows.length, scrollHeight, scrollTop, viewportHeight]);
 
-  return [refs, viewportRows, rowsPerPage];
+  return [refs1, refs2, viewportRows, rowsPerPage];
 }
