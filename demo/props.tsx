@@ -2,7 +2,7 @@ import { Column, CellRendererProps } from '../src';
 import dayjs from 'dayjs';
 
 export interface DemoRow {
-  id: string;
+  id: number;
   icon: string;
   fileName: string;
   fileType: string;
@@ -81,9 +81,9 @@ export function createRows() {
   const faker = window.faker;
   const rows: DemoRow[] = [];
 
-  for (let i = 0; i < 10000; i++) {
+  for (let id = 1; id <= 100000; id++) {
     rows.push({
-      id: `id_${i}`,
+      id,
       icon: faker.internet.emoji(),
       fileName: faker.system.commonFileName().split('.')[0],
       fileType: faker.system.commonFileExt(),

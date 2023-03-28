@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, renderHook } from '@testing-library/react';
 import { StrictMode } from 'react';
-import ListView, { Column, cssClassnames, ListViewProps } from '../src';
+import ListView, { Column, cssClassnames, ListViewProps, useRows } from '../src';
 
 function renderListView<R, K extends React.Key>(props: ListViewProps<R, K>) {
   render(
@@ -21,7 +21,9 @@ test('header cell rendering', () => {
     { key: 'id', name: 'ID', headerCellClass: 'primary' },
     { key: 'name', name: 'Name', headerRenderer: Header },
   ];
-  const { headerCells } = renderListView({ columns, rows: [], rowKey: 'id' });
+  const rows: Row[] = [];
+  const { result } = renderHook(() => useRows(rows, (row) => row.id));
+  const { headerCells } = renderListView({ ...result.current, columns });
   expect(headerCells).toHaveLength(2);
   expect(headerCells[0]).toHaveClass(cssClassnames.listViewCell);
   expect(headerCells[0]).toHaveClass('primary');

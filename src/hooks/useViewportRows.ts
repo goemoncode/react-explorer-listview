@@ -6,7 +6,7 @@ import { range } from '../utils';
 export function useViewportRows<R, E1 extends HTMLElement, E2 extends HTMLElement>(
   ref1: RefObject<E1>,
   ref2: RefObject<E2>,
-  rows: readonly R[],
+  totalRows: number,
   headerHeight: number,
   focusedRowIndex: number
 ): [
@@ -24,11 +24,11 @@ export function useViewportRows<R, E1 extends HTMLElement, E2 extends HTMLElemen
   const prevFocusedRowIndex = usePrevious(focusedRowIndex) ?? -1;
 
   const [viewportRows, rowsPerPage] = useMemo(() => {
-    if (scrollHeight === 0 || rows.length === 0) return [[], 0];
+    if (scrollHeight === 0 || totalRows === 0) return [[], 0];
     function clamp(index: number) {
-      return Math.max(0, Math.min(index, rows.length - 1));
+      return Math.max(0, Math.min(index, totalRows - 1));
     }
-    const rowHeight = scrollHeight / rows.length;
+    const rowHeight = scrollHeight / totalRows;
     const rowsPerPage = Math.floor(viewportHeight / rowHeight);
     const viewportTopIndex = Math.floor(scrollTop / rowHeight);
     const overscanThreshold = 4;
@@ -43,7 +43,7 @@ export function useViewportRows<R, E1 extends HTMLElement, E2 extends HTMLElemen
       ).values()
     ).sort();
     return [viewportRows, rowsPerPage];
-  }, [focusedRowIndex, prevFocusedRowIndex, rows.length, scrollHeight, scrollTop, viewportHeight]);
+  }, [focusedRowIndex, prevFocusedRowIndex, totalRows, scrollHeight, scrollTop, viewportHeight]);
 
   return [refs1, refs2, viewportRows, rowsPerPage];
 }

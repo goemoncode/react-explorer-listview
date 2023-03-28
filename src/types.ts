@@ -17,9 +17,6 @@ export const cssClassnames = {
   listViewCell: 'relv__cell',
 };
 
-export type Renderer<P> = (props: P) => React.ReactNode;
-export type RendererWithKey<P> = (key: React.Key, props: P) => React.ReactNode;
-
 export interface Column<R> {
   key: string;
   name: string;
@@ -36,8 +33,8 @@ export interface Column<R> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   valueGetter?: (row: R, column: Column<R>) => any;
   comparator?: Comparator<R>;
-  renderer?: Renderer<CellRendererProps<R>>;
-  headerRenderer?: Renderer<HeaderCellRendererProps<R>>;
+  renderer?: (props: CellRendererProps<R>) => React.ReactNode;
+  headerRenderer?: (props: HeaderCellRendererProps<R>) => React.ReactNode;
 }
 
 export interface CalculatedColumn<R> extends Column<R> {
@@ -78,14 +75,15 @@ export interface ListViewHandle {
   scrollToRow: (rowIndex: number) => void;
 }
 
-export type RowKey<R, K> = ((row: R) => K) | (keyof R & string);
-
 export type ListViewProps<R, K extends React.Key = React.Key> = {
-  columns: readonly Column<R>[];
-  rows: readonly R[];
-  rowKey: RowKey<R, K>;
+  getRow: (rowKey: K) => R | undefined;
+  getRowKey: (row: R) => K;
+  getRowByIndex: (index: number) => R;
+  indexOfRow: (row: R) => number;
+  totalRows: number;
   rowHeight?: number | string;
   noBorder?: boolean;
+  columns: readonly Column<R>[];
   defaultColumnOptions?: DefaultColumnOptions<R>;
   focusedRow?: K;
   onFocusedRowChange?: (focusedRow: K | undefined) => void;
@@ -94,17 +92,16 @@ export type ListViewProps<R, K extends React.Key = React.Key> = {
   sortColumn?: SortColumn;
   onSortColumnChange?: (sortColumn?: SortColumn) => void;
   onColumnResize?: (column: CalculatedColumn<R>, width: number) => void;
-  onRowClick?: (event: React.MouseEvent, row: R) => void;
-  onRowDoubleClick?: (event: React.MouseEvent, row: R) => void;
-  onRowContextMenu?: (event: React.MouseEvent, row: R) => void;
-  onRowDragStart?: (event: React.DragEvent, row: R) => void;
 } & React.HTMLAttributes<HTMLDivElement>;
+
+export type Renderer<P> = (props: P) => JSX.Element;
+export type RendererWithKey<P> = (key: React.Key, props: P) => JSX.Element;
 
 export interface DefaultRenderers<R> {
   headerRow?: Renderer<ListViewHeaderRowProps<R>>;
   headerCellContainer?: Renderer<ListViewHeaderCellContainerProps<R>>;
   headerCell?: RendererWithKey<ListViewHeaderCellProps<R>>;
-  rowContainer?: Renderer<ListViewRowContainerProps<R>>;
+  rowContainer?: Renderer<ListViewRowContainerProps>;
   row?: RendererWithKey<ListViewRowProps<R>>;
   cellContainer?: Renderer<ListViewCellContainerProps<R>>;
   cell?: RendererWithKey<ListViewCellProps<R>>;

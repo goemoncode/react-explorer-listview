@@ -11,4 +11,5 @@ export * from './hooks/useHeaderHeight';
 export * from './hooks/useColumnResize';
 export * from './hooks/useRowSort';
 export * from './hooks/useDefaultRowSort';
+export * from './hooks/useRows';
 import './index.scss';

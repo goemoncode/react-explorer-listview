@@ -17,10 +17,6 @@ export type ListViewRowProps<R> = {
   onRowFocus?: (event: React.FocusEvent, row: R) => void;
   onRowMouseDown?: (event: React.MouseEvent, row: R) => void;
   onRowMouseUp?: (event: React.MouseEvent, row: R) => void;
-  onRowClick?: (event: React.MouseEvent, row: R) => void;
-  onRowDoubleClick?: (event: React.MouseEvent, row: R) => void;
-  onRowContextMenu?: (event: React.MouseEvent, row: R) => void;
-  onRowDragStart?: (event: React.DragEvent, row: R) => void;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 function Row<R>(
@@ -35,11 +31,11 @@ function Row<R>(
     onRowFocus,
     onRowMouseDown,
     onRowMouseUp,
-    onRowClick,
-    onRowDoubleClick,
-    onRowContextMenu,
-    onRowDragStart,
     className,
+    style,
+    onFocus,
+    onMouseDown,
+    onMouseUp,
     ...props
   }: ListViewRowProps<R>,
   ref?: React.Ref<HTMLDivElement>
@@ -84,15 +80,19 @@ function Row<R>(
         className
       )}
       tabIndex={canTabFocus ? 0 : -1}
-      style={{ gridRowStart }}
-      onFocus={(event) => onRowFocus?.(event, row)}
-      onMouseDown={(event) => onRowMouseDown?.(event, row)}
-      onMouseUp={(event) => onRowMouseUp?.(event, row)}
-      onClick={(event) => onRowClick?.(event, row)}
-      onDoubleClick={(event) => onRowDoubleClick?.(event, row)}
-      onContextMenu={(event) => onRowContextMenu?.(event, row)}
-      draggable={onRowDragStart ? true : undefined}
-      onDragStart={(event) => onRowDragStart?.(event, row)}
+      style={{ ...style, gridRowStart }}
+      onFocus={(event) => {
+        onRowFocus?.(event, row);
+        onFocus?.(event);
+      }}
+      onMouseDown={(event) => {
+        onRowMouseDown?.(event, row);
+        onMouseDown?.(event);
+      }}
+      onMouseUp={(event) => {
+        onRowMouseUp?.(event, row);
+        onMouseUp?.(event);
+      }}
       {...props}
       {...dataProps}
     >

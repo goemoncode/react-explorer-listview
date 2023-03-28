@@ -3,9 +3,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode, useState } from 'react';
-import ListView, { Column, SortColumn } from '../src';
+import ListView, { Column, SortColumn, useRows } from '../src';
 
-const columns: readonly Column<{ colA: string }>[] = [
+type Row = { id: number; colA: string; colB: string; colC: string; colD: string };
+const columns: readonly Column<Row>[] = [
   { key: 'colA', name: 'colA' },
   { key: 'colB', name: 'colB' },
   { key: 'colC', name: 'colC' },
@@ -13,13 +14,14 @@ const columns: readonly Column<{ colA: string }>[] = [
 ];
 
 function TestListView() {
+  const rows: Row[] = [];
+  const rowsProps = useRows(rows, (row) => row.id);
   const [sortColumn, setSortColumn] = useState<SortColumn>();
   return (
     <>
       <ListView
+        {...rowsProps}
         columns={columns}
-        rows={[]}
-        rowKey="colA"
         defaultColumnOptions={{ sortable: true }}
         sortColumn={sortColumn}
         onSortColumnChange={setSortColumn}

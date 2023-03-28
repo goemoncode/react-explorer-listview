@@ -38,7 +38,7 @@ export function defaultCellRenderer<R>(key: React.Key, props: ListViewCellProps<
   return <ListViewCell key={key} {...props} />;
 }
 
-function defaultRenderer<R>({ column, row }: CellRendererProps<R>) {
+function defaultRenderer<R>({ column, row }: CellRendererProps<R>): React.ReactNode {
   const { key, valueGetter = (row) => row[key as keyof R] } = column;
-  return <>{valueGetter(row, column)}</>;
+  return valueGetter(row, column);
 }

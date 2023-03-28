@@ -5,9 +5,11 @@ import ListView, {
   DefaultRenderersProvider,
   ListViewHandle,
   ListViewHeaderRow,
+  ListViewRow,
   reorder,
   SortColumn,
   useDefaultRowSort,
+  useRows,
 } from '../src/';
 import { NumberInput, ActionButton, CheckBox } from './components/FormControl';
 import {
@@ -169,6 +171,18 @@ export default function App() {
         <DnDKitHeaderCellContainer onColumnReorder={onColumnReorder} {...props} />
       ),
       headerCell: (key, props) => <DnDKitHeaderCell key={key} {...props} />,
+      row(key, { row, ...props }) {
+        return (
+          <ListViewRow
+            key={key}
+            row={row}
+            {...props}
+            onClick={() => console.log(`[click] id=${row.id}`)}
+            onDoubleClick={() => console.log(`[doubleclick] id=${row.id}`)}
+            onContextMenu={() => console.log(`[contextmenu] id=${row.id}`)}
+          />
+        );
+      },
       noRowsFallback: (
         <div className="noRows">
           <div>(´・ω・｀)</div>
@@ -177,8 +191,8 @@ export default function App() {
     };
   }, [columns, contextMenuProps, handleClick, handleContextMenu]);
 
-  const [focusedRow, setFocusedRow] = useState<string>();
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [focusedRow, setFocusedRow] = useState<number>();
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
   function handleKeyDown(event: React.KeyboardEvent) {
     if (event.key === 'Delete') {
@@ -196,6 +210,8 @@ export default function App() {
       });
     }
   }
+
+  const rowsProps = useRows(filteredRows, (row) => row.id);
 
   return (
     <div className="demo app">
@@ -229,15 +245,14 @@ export default function App() {
           >
             <ListView
               ref={ref}
+              {...rowsProps}
               columns={columns}
-              rows={filteredRows}
-              rowKey={(row) => row.id}
-              sortColumn={sortColumn}
               defaultColumnOptions={{
                 sortable: true,
                 resizable: true,
                 headerCellClass: 'filter-cell',
               }}
+              sortColumn={sortColumn}
               onColumnResize={onColumnResize}
               onSortColumnChange={setSortColumn}
               focusedRow={focusedRow}

@@ -20,7 +20,6 @@ import { RowSortContext, RowSortProvider } from './hooks/useRowSort';
 import { ColumnResizeContext, ColumnResizeProvider } from './hooks/useColumnResize';
 import { HeaderHeightContext, HeaderHeightProvider } from './hooks/useHeaderHeight';
 import { FocusContainerProvider } from './hooks/useFocusContainer';
-import { useRowKey } from './hooks/useRowKey';
 import { defaultHeaderRowRenderer } from './ListViewHeaderRow';
 import { defaultRowRenderer } from './ListViewRow';
 import clsx from 'clsx';
@@ -28,11 +27,14 @@ import clsx from 'clsx';
 function ListView<R, K extends Key = Key>(
   {
     columns: rawColumns,
-    rows,
+    getRow,
+    getRowKey,
+    getRowByIndex,
+    indexOfRow,
+    totalRows,
     rowHeight,
     noBorder,
     defaultColumnOptions,
-    rowKey,
     focusedRow: propFocusedRow,
     onFocusedRowChange,
     selectedRows: propSelectedRows,
@@ -40,10 +42,6 @@ function ListView<R, K extends Key = Key>(
     sortColumn,
     onSortColumnChange,
     onColumnResize,
-    onRowClick,
-    onRowDoubleClick,
-    onRowContextMenu,
-    onRowDragStart,
     className,
     style,
     ...props
@@ -63,7 +61,13 @@ function ListView<R, K extends Key = Key>(
     () => ({ sortColumn, onSort: onSortColumnChange }),
     [onSortColumnChange, sortColumn]
   );
-  const { getByRow, getIndexByKey } = useRowKey(rows, rowKey);
+  const getIndexByKey = useCallback(
+    (rowKey: K | undefined) => {
+      const row = rowKey == null ? undefined : getRow(rowKey);
+      return row == null ? undefined : indexOfRow(row);
+    },
+    [getRow, indexOfRow]
+  );
 
   const [focusedRow, setFocusedRow] = useState<K | undefined>(propFocusedRow);
   const focusedRowIndex = getIndexByKey(focusedRow) ?? -1;
@@ -89,7 +93,7 @@ function ListView<R, K extends Key = Key>(
   const [refs1, refs2, viewportRows, rowsPerPage] = useViewportRows(
     ref,
     refContainer,
-    rows,
+    totalRows,
     headerHeight,
     focusedRowIndex
   );
@@ -100,12 +104,10 @@ function ListView<R, K extends Key = Key>(
       element: ref.current,
       containerElement: refContainer.current,
       scrollToRow: (rowIndex: number) => {
-        if (rowIndex >= 0 && rowIndex <= rows.length - 1) {
-          setFocusedRow(getByRow(rows[rowIndex]));
-        }
+        setFocusedRow(getRowKey(getRowByIndex(rowIndex)));
       },
     }),
-    [ref, rows, getByRow]
+    [getRowKey, getRowByIndex]
   );
 
   const [columnResizeEventArgs, setColumnResizeEventArgs] =
@@ -124,11 +126,15 @@ function ListView<R, K extends Key = Key>(
   ]);
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (rows.length === 0) return;
+    if (totalRows === 0) return;
     const { key, code, shiftKey, ctrlKey } = event;
     if (ctrlKey && code == 'KeyA') {
       event.preventDefault();
-      setSelectedRows(rows.map(getByRow));
+      setSelectedRows(
+        range(0, totalRows - 1)
+          .map(getRowByIndex)
+          .map(getRowKey)
+      );
     } else if (code === 'Space') {
       event.preventDefault(); // Spaceキー押下によるスクロール動作を無効化
       if (focusedRow !== undefined) {
@@ -144,7 +150,7 @@ function ListView<R, K extends Key = Key>(
     } else {
       const getClampedNext = (index: number) => {
         function clamp(index: number) {
-          return Math.max(0, Math.min(index, rows.length - 1));
+          return Math.max(0, Math.min(index, totalRows - 1));
         }
         switch (key) {
           case 'ArrowUp':
@@ -154,7 +160,7 @@ function ListView<R, K extends Key = Key>(
           case 'Home':
             return 0;
           case 'End':
-            return rows.length - 1;
+            return totalRows - 1;
           case 'PageUp':
             return clamp(index - (rowsPerPage - 1));
           case 'PageDown':
@@ -167,11 +173,11 @@ function ListView<R, K extends Key = Key>(
       const rowIndex = getClampedNext(focusedRowIndex);
       if (rowIndex !== false && rowIndex != focusedRowIndex) {
         event.preventDefault();
-        const rowKey = getByRow(rows[rowIndex]);
+        const rowKey = getRowKey(getRowByIndex(rowIndex));
         setFocusedRow(rowKey);
         if (shiftKey) {
           const selected = range(getIndexByKey(shiftKeyHeldRow) ?? 0, rowIndex).map((i) =>
-            getByRow(rows[i])
+            getRowKey(getRowByIndex(i))
           );
           setSelectedRows(selected, ctrlKey);
         } else if (!ctrlKey) {
@@ -184,23 +190,23 @@ function ListView<R, K extends Key = Key>(
 
   const handleRowFocus = useCallback(
     (event: React.FocusEvent, row: R) => {
-      setFocusedRow(getByRow(row));
+      setFocusedRow(getRowKey(row));
     },
-    [getByRow]
+    [getRowKey]
   );
 
   const handleRowMouseDown = useCallback(
     (event: React.MouseEvent, row: R) => {
       const { shiftKey, ctrlKey } = event;
       if (!shiftKey && !ctrlKey) {
-        const rowKey = getByRow(row);
+        const rowKey = getRowKey(row);
         if (!new Set(selectedRows).has(rowKey)) {
           setSelectedRows([rowKey]);
           setShiftKeyHeldRow(rowKey);
         }
       }
     },
-    [getByRow, selectedRows, setSelectedRows]
+    [getRowKey, selectedRows, setSelectedRows]
   );
 
   const handleRowMouseUp = useCallback(
@@ -209,13 +215,13 @@ function ListView<R, K extends Key = Key>(
       // 0: left button, 1: wheel button, 2: right button
       if (button !== 2) {
         if (shiftKey) {
-          const rowIndex = rows.indexOf(row);
+          const rowIndex = indexOfRow(row);
           const selected = range(getIndexByKey(shiftKeyHeldRow) ?? 0, rowIndex).map((i) =>
-            getByRow(rows[i])
+            getRowKey(getRowByIndex(i))
           );
           setSelectedRows(selected, ctrlKey);
         } else {
-          const rowKey = getByRow(row);
+          const rowKey = getRowKey(row);
           const selected = new Set(selectedRows);
           if (ctrlKey) {
             if (selected.has(rowKey)) {
@@ -231,7 +237,15 @@ function ListView<R, K extends Key = Key>(
         }
       }
     },
-    [getByRow, getIndexByKey, rows, selectedRows, setSelectedRows, shiftKeyHeldRow]
+    [
+      getRowKey,
+      getIndexByKey,
+      getRowByIndex,
+      indexOfRow,
+      selectedRows,
+      setSelectedRows,
+      shiftKeyHeldRow,
+    ]
   );
 
   function getCssVar(value: string | number | undefined) {
@@ -239,7 +253,7 @@ function ListView<R, K extends Key = Key>(
   }
   const layoutCssVars: Record<string, string | number | undefined> = {
     '--relv-row-height': getCssVar(rowHeight),
-    '--relv-row-count': rows.length || 1,
+    '--relv-row-count': totalRows || 1,
     '--relv-border-width': noBorder ? 'none' : undefined,
     '--relv-header-height': `${headerHeight}px`,
     '--relv-grid-template-columns': gridTemplateColumns,
@@ -251,13 +265,10 @@ function ListView<R, K extends Key = Key>(
     <div
       ref={refs1}
       role="table"
-      aria-rowcount={rows.length + 1}
+      aria-rowcount={totalRows + 1}
       aria-multiselectable={true}
       className={clsx(cssClassnames.listView, className)}
-      style={{
-        ...style,
-        ...layoutCssVars,
-      }}
+      style={{ ...style, ...layoutCssVars }}
       {...props}
     >
       <RowSortProvider value={rowSortContext}>
@@ -277,12 +288,15 @@ function ListView<R, K extends Key = Key>(
       >
         <FocusContainerProvider value={refContainer.current}>
           {rowContainer({
-            rows,
+            viewportRows,
             children:
-              rows.length === 0
+              totalRows === 0
                 ? noRowsFallback
                 : viewportRows
-                    .map((i) => ({ rowIndex: i, row: rows[i], rowKey: getByRow(rows[i]) }))
+                    .map((i) => {
+                      const row = getRowByIndex(i);
+                      return { rowIndex: i, row, rowKey: getRowKey(row) };
+                    })
                     .map(({ rowIndex, row, rowKey }) =>
                       rowRenderer(rowKey, {
                         columns,
@@ -296,10 +310,6 @@ function ListView<R, K extends Key = Key>(
                         onRowFocus: handleRowFocus,
                         onRowMouseDown: handleRowMouseDown,
                         onRowMouseUp: handleRowMouseUp,
-                        onRowClick: onRowClick,
-                        onRowDoubleClick: onRowDoubleClick,
-                        onRowContextMenu: onRowContextMenu,
-                        onRowDragStart: onRowDragStart,
                       })
                     ),
           })}
@@ -313,10 +323,10 @@ export default forwardRef(ListView) as <R, K extends Key = Key>(
   props: ListViewProps<R, K> & RefAttributes<ListViewHandle>
 ) => JSX.Element;
 
-export type ListViewRowContainerProps<R> = React.PropsWithChildren<{
-  rows: readonly R[];
+export type ListViewRowContainerProps = React.PropsWithChildren<{
+  viewportRows: number[];
 }>;
 
-function defaultRowContainer<R>({ children }: ListViewRowContainerProps<R>) {
+function defaultRowContainer({ children }: ListViewRowContainerProps) {
   return <>{children}</>;
 }
