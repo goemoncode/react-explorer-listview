@@ -1,3 +1,4 @@
+import { describe, expect, it, test } from 'vitest';
 import { Column, getDefaultComparator, range, reorder, sortBy } from '../src';
 
 function createColumns(): Column<unknown>[] {

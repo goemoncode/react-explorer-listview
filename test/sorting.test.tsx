@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { render, screen } from '@testing-library/react';
+import { expect, test } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode, useState } from 'react';
 import ListView, { Column, SortColumn, useRows } from '../src';
@@ -56,21 +57,21 @@ test('should not sort if sortable is false', async () => {
   const { headerCells, expectSortColumn } = renderListView();
   const index = columns.findIndex((col) => !col.sortable);
   const headerCell = headerCells[index];
-  await userEvent.click(headerCell);
-  expect(headerCell).not.toHaveAttribute('aria-sort');
+  userEvent.click(headerCell);
+  await waitFor(() => expect(headerCell).not.toHaveAttribute('aria-sort'));
   expectSortColumn(undefined);
 });
 
 test('column sort', async () => {
   const { headerCells, expectSortColumn } = renderListView();
   const headerCell = headerCells[0];
-  await userEvent.click(headerCell.firstElementChild!);
-  expect(headerCell).toHaveAttribute('aria-sort', 'ascending');
+  userEvent.click(headerCell.firstElementChild!);
+  await waitFor(() => expect(headerCell).toHaveAttribute('aria-sort', 'ascending'));
   expectSortColumn({ columnKey: columns[0].key, direction: 'ASC' });
-  await userEvent.click(headerCell.firstElementChild!);
-  expect(headerCell).toHaveAttribute('aria-sort', 'descending');
+  userEvent.click(headerCell.firstElementChild!);
+  await waitFor(() => expect(headerCell).toHaveAttribute('aria-sort', 'descending'));
   expectSortColumn({ columnKey: columns[0].key, direction: 'DESC' });
-  await userEvent.click(headerCell.firstElementChild!);
-  expect(headerCell).not.toHaveAttribute('aria-sort');
+  userEvent.click(headerCell.firstElementChild!);
+  await waitFor(() => expect(headerCell).not.toHaveAttribute('aria-sort'));
   expectSortColumn(undefined);
 });

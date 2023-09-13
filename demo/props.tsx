@@ -87,12 +87,12 @@ export function createRows() {
       icon: faker.internet.emoji(),
       fileName: faker.system.commonFileName().split('.')[0],
       fileType: faker.system.commonFileExt(),
-      fileSize: faker.datatype.number({ min: 1e2, max: 1e5 }),
-      createTimeMs: faker.datatype.datetime({
-        min: Date.now() - 864e5 * 90,
-        max: Date.now() - 864e5 * 60,
+      fileSize: faker.number.int({ min: 1e2, max: 1e5 }),
+      createTimeMs: faker.date.between({
+        from: Date.now() - 864e5 * 90,
+        to: Date.now() - 864e5 * 60,
       }),
-      updateTimeMs: faker.datatype.datetime({ min: Date.now() - 864e5 * 30, max: Date.now() }),
+      updateTimeMs: faker.date.between({ from: Date.now() - 864e5 * 30, to: Date.now() }),
       directoryPath: faker.system.directoryPath(),
     });
   }
