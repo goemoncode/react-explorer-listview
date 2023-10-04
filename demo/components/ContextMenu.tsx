@@ -33,19 +33,19 @@ export function ContextMenu({
   }, [isOpen, onClose]);
 
   return isOpen
-    ? createPortal(
+    ? (createPortal(
         <div ref={ref} className="contextmenu" style={{ top, left }}>
           {children}
         </div>,
         document.body
-      )
+      ) as JSX.Element)
     : null;
 }
 
 export function useContextMenu<E extends HTMLElement>(): [
   handleContextMenu: (event: React.MouseEvent<E>) => void,
   handleClick: (onClick: () => void) => () => void,
-  props: ContextMenuProps
+  props: ContextMenuProps,
 ] {
   const [props, setProps] = useState<ContextMenuProps>({ isOpen: false });
 

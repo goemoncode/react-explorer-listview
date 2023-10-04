@@ -29,7 +29,7 @@ import {
 } from './components/RowFilter';
 import { CheckMark, ContextMenu, useContextMenu } from './components/ContextMenu';
 import clsx from 'clsx';
-import { ReactComponent as Github } from './assets/github.svg';
+import Github from './assets/github.svg?react';
 
 export default function App() {
   const [rows, setRows] = useState(createRows);
