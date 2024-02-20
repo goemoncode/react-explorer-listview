@@ -280,6 +280,7 @@ function ListView<R, K extends Key = Key>(
           </ColumnResizeProvider>
         </HeaderHeightProvider>
       </RowSortProvider>
+      {totalRows === 0 && noRowsFallback}
       <div
         ref={refs2}
         role="rowgroup"
@@ -289,29 +290,25 @@ function ListView<R, K extends Key = Key>(
         <FocusContainerProvider value={refContainer.current}>
           {rowContainer({
             viewportRows,
-            children:
-              totalRows === 0
-                ? noRowsFallback
-                : viewportRows
-                    .map((i) => {
-                      const row = getRowByIndex(i);
-                      return { rowIndex: i, row, rowKey: getRowKey(row) };
-                    })
-                    .map(({ rowIndex, row, rowKey }) =>
-                      rowRenderer(rowKey, {
-                        columns,
-                        row,
-                        rowIndex,
-                        gridRowStart: rowIndex + 1,
-                        canTabFocus:
-                          focusedRow !== undefined ? focusedRow === rowKey : rowIndex == 0,
-                        shouldFocus: focusedRow !== undefined ? focusedRow === rowKey : false,
-                        selected: selectedSet.has(rowKey),
-                        onRowFocus: handleRowFocus,
-                        onRowMouseDown: handleRowMouseDown,
-                        onRowMouseUp: handleRowMouseUp,
-                      })
-                    ),
+            children: viewportRows
+              .map((i) => {
+                const row = getRowByIndex(i);
+                return { rowIndex: i, row, rowKey: getRowKey(row) };
+              })
+              .map(({ rowIndex, row, rowKey }) =>
+                rowRenderer(rowKey, {
+                  columns,
+                  row,
+                  rowIndex,
+                  gridRowStart: rowIndex + 1,
+                  canTabFocus: focusedRow !== undefined ? focusedRow === rowKey : rowIndex == 0,
+                  shouldFocus: focusedRow !== undefined ? focusedRow === rowKey : false,
+                  selected: selectedSet.has(rowKey),
+                  onRowFocus: handleRowFocus,
+                  onRowMouseDown: handleRowMouseDown,
+                  onRowMouseUp: handleRowMouseUp,
+                })
+              ),
           })}
         </FocusContainerProvider>
       </div>

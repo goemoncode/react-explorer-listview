@@ -5,16 +5,11 @@ export function useRows<R, K extends Key = Key>(rows: readonly R[], keySelector:
   const getRowKey = useMemo(() => keySelector, []);
   const [getRow, getRowByIndex, indexOfRow] = useMemo(() => {
     const map = new Map(rows.map((row) => [getRowKey(row), row]));
-    function getRow(key: K) {
-      return map.get(key);
-    }
-    function getRowByIndex(index: number) {
-      return rows[index];
-    }
-    function indexOfRow(row: R) {
-      return rows.indexOf(row);
-    }
-    return [getRow, getRowByIndex, indexOfRow];
+    return [
+      (key: K) => map.get(key),
+      (index: number) => rows[index],
+      (row: R) => rows.indexOf(row),
+    ];
   }, [getRowKey, rows]);
   return { getRow, getRowKey, getRowByIndex, indexOfRow, totalRows: rows.length };
 }

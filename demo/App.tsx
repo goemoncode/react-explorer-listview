@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDebounce } from 'react-use';
 import ListView, {
   CalculatedColumn,
   DefaultRenderers,
@@ -17,7 +18,7 @@ import {
   DnDKitHeaderCellContainer,
   ColumnReorderProvider,
 } from './components/ColumnReorder';
-import { createRows, DemoRow, createColumns } from './props';
+import { DemoRow, createColumns, useDemoRows } from './props';
 import {
   InputTextFilter,
   InputSizeFilter,
@@ -32,13 +33,11 @@ import clsx from 'clsx';
 import Github from './assets/github.svg?react';
 
 export default function App() {
-  const [rows, setRows] = useState(createRows);
+  const [rows, setRows] = useDemoRows();
   const fileTypes = useMemo(
     () => Array.from(new Set(rows.map((x) => x.fileType)).values()),
     [rows]
   );
-  const minFileSize = useMemo(() => Math.min(...rows.map((x) => x.fileSize ?? 0)), [rows]);
-  const maxFileSize = useMemo(() => Math.max(...rows.map((x) => x.fileSize ?? 0)), [rows]);
   const initColumns = useMemo(() => {
     return createColumns({
       fileName: {
@@ -61,9 +60,7 @@ export default function App() {
         headerRenderer: (props) => (
           <RowFilterHeader
             {...props}
-            inputRenderer={(ctx) => (
-              <InputSizeFilter min={minFileSize} max={maxFileSize} {...ctx} />
-            )}
+            inputRenderer={(ctx) => <InputSizeFilter min={0} max={1e5} {...ctx} />}
           />
         ),
       },
@@ -92,7 +89,7 @@ export default function App() {
         ),
       },
     });
-  }, [fileTypes, minFileSize, maxFileSize]);
+  }, [fileTypes]);
   const [columnReorderEnabled, setColumnReorderEnabled] = useState(true);
   const [columns, setColumns] = useState(initColumns);
   const [sortColumn, setSortColumn] = useState<SortColumn>();
@@ -101,24 +98,31 @@ export default function App() {
     () => () => ({
       fileName: '',
       fileType: '',
-      fileSize: maxFileSize,
+      fileSize: 1e5,
     }),
-    [maxFileSize]
+    []
   );
   const [filterVisible, setFilterVisible] = useState(false);
   const [filterParams, setFilterParams] = useState<RowFilterParams>(initFilter);
-  const filteredRows = useMemo(() => {
-    return sortedRows.filter((r) => {
-      return (
-        (filterParams.fileName ? r.fileName.includes(filterParams.fileName) : true) &&
-        (filterParams.fileType ? r.fileType === filterParams.fileType : true) &&
-        (filterParams.fileSize ? r.fileSize <= filterParams.fileSize : true) &&
-        (filterParams.createTimeMs ? r.createTimeMs <= filterParams.createTimeMs : true) &&
-        (filterParams.updateTimeMs ? r.updateTimeMs <= filterParams.updateTimeMs : true) &&
-        (filterParams.directoryPath ? r.directoryPath.includes(filterParams.directoryPath) : true)
-      );
-    });
-  }, [sortedRows, filterParams]);
+  const [filteredRows, setFilteredRows] = useState<DemoRow[]>(rows);
+  useDebounce(
+    () => {
+      const rows = sortedRows.filter((r) => {
+        return (
+          (filterParams.fileName ? r.fileName.includes(filterParams.fileName) : true) &&
+          (filterParams.fileType ? r.fileType === filterParams.fileType : true) &&
+          (filterParams.fileSize ? r.fileSize <= filterParams.fileSize : true) &&
+          (filterParams.createTimeMs ? r.createTimeMs <= filterParams.createTimeMs : true) &&
+          (filterParams.updateTimeMs ? r.updateTimeMs <= filterParams.updateTimeMs : true) &&
+          (filterParams.directoryPath ? r.directoryPath.includes(filterParams.directoryPath) : true)
+        );
+      });
+      setFilteredRows(rows);
+    },
+    50,
+    [sortedRows, filterParams]
+  );
+
   const ref = useRef<ListViewHandle>(null);
 
   const onColumnResize = useCallback((column: CalculatedColumn<DemoRow>, width: number) => {
@@ -128,6 +132,10 @@ export default function App() {
   useEffect(() => {
     setColumnReorderEnabled(!filterVisible);
   }, [filterVisible]);
+
+  useEffect(() => {
+    setColumns(initColumns);
+  }, [initColumns]);
 
   const onReset = useCallback(() => {
     setColumns(initColumns);
@@ -213,6 +221,15 @@ export default function App() {
 
   const rowsProps = useRows(filteredRows, (row) => row.id);
 
+  const rowFilterContextValue = useMemo(
+    () => ({
+      params: filterParams,
+      visible: filterVisible,
+      onChange: setFilterParams,
+    }),
+    [filterParams, filterVisible]
+  );
+
   return (
     <div className="demo app">
       <div className="side">
@@ -240,9 +257,7 @@ export default function App() {
       </div>
       <DefaultRenderersProvider value={renderers}>
         <ColumnReorderProvider value={columnReorderEnabled}>
-          <RowFilterProvider
-            value={{ params: filterParams, visible: filterVisible, onChange: setFilterParams }}
-          >
+          <RowFilterProvider value={rowFilterContextValue}>
             <ListView
               ref={ref}
               {...rowsProps}

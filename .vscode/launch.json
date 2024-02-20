@@ -10,7 +10,7 @@
       "name": "Launch Chrome",
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}",
-      "preLaunchTask": "npm: dev",
+      // "preLaunchTask": "npm: dev",
       "resolveSourceMapLocations": [
         "${workspaceFolder}/**",
         "!**/node_modules/**"

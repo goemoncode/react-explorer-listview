@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Column, CellRendererProps } from '../src';
 import dayjs from 'dayjs';
 
@@ -77,24 +78,36 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(1024, i)).toFixed(decimals)) + ' ' + sizes[i];
 }
 
-export function createRows() {
-  const faker = window.faker;
-  const rows: DemoRow[] = [];
+function rand(min: number, max: number) {
+  return min + Math.floor((max - min) * Math.random());
+}
 
-  for (let id = 1; id <= 100000; id++) {
+export function createRows() {
+  const rows: DemoRow[] = [];
+  for (let id = 1; id < 100000; id++) {
     rows.push({
       id,
-      icon: faker.internet.emoji(),
-      fileName: faker.system.commonFileName().split('.')[0],
-      fileType: faker.system.commonFileExt(),
-      fileSize: faker.number.int({ min: 1e2, max: 1e5 }),
-      createTimeMs: faker.date.between({
-        from: Date.now() - 864e5 * 90,
-        to: Date.now() - 864e5 * 60,
-      }),
-      updateTimeMs: faker.date.between({ from: Date.now() - 864e5 * 30, to: Date.now() }),
-      directoryPath: faker.system.directoryPath(),
+      icon: '📃',
+      fileName: 'test' + ('000000' + id).slice(-5),
+      fileType: 'txt',
+      fileSize: rand(1e2, 1e5),
+      createTimeMs: new Date(rand(Date.now() - 864e5 * 60, Date.now() - 864e5 * 90)),
+      updateTimeMs: new Date(rand(Date.now() - 864e5 * 30, Date.now())),
+      directoryPath: '/root',
     });
   }
   return rows;
+}
+
+export function useDemoRows() {
+  // return useState<DemoRow[]>(createRows);
+  const useStateReturn = useState<DemoRow[]>([]);
+  const [, setRows] = useStateReturn;
+  useEffect(() => {
+    (async () => {
+      const rows = await fetch('demo.json').then<DemoRow[]>((res) => res.json());
+      setRows(rows);
+    })();
+  }, [setRows]);
+  return useStateReturn;
 }
