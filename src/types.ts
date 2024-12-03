@@ -72,6 +72,7 @@ export type HeaderCellRendererProps<R> = {
 
 export interface ListViewHandle {
   element: HTMLDivElement | null;
+  containerElement: HTMLDivElement | null;
   scrollToRow: (rowIndex: number) => void;
 }
 
